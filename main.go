@@ -42,7 +42,7 @@ func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		proxy.ServeHTTP(w, r)
 	})
-	log.Printf("Listening for traffic on port: %s", *proxyPort)
+	log.Println("Listening for traffic")
 	log.Fatal(http.ListenAndServe(":"+*proxyPort, nil))
 }
 

@@ -36,7 +36,7 @@ func main() {
 		log.Fatal(err)
 	}
 	transport := createTransport(tlsConfig)
-	proxy := httputil.NewSingleHostReverseProxy(satelliteURL)
+	proxy := newReverseProxyWithHostRewrite(satelliteURL)
 	proxy.Transport = transport
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -44,6 +44,18 @@ func main() {
 	})
 	log.Println("Listening for traffic")
 	log.Fatal(http.ListenAndServe(":"+*proxyPort, nil))
+}
+
+// newReverseProxyWithHostRewrite augments the default behavior of httputil.NewSingleHostReverseProxy
+// by additionally rewriting the Host header.
+func newReverseProxyWithHostRewrite(target *url.URL) *httputil.ReverseProxy {
+	proxy := httputil.NewSingleHostReverseProxy(target)
+	baseDirector := proxy.Director
+	proxy.Director = func(req *http.Request) {
+		req.Host = target.Hostname()
+		baseDirector(req)
+	}
+	return proxy
 }
 
 // getTLSConfig returns a *tls.Config according to whether a user has supplied a customCACertFile. If they have,
